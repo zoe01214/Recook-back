@@ -408,6 +408,7 @@ export const getuserHome = async (req, res) => {
           _id: 1,
           isEnabled: 1,
           account: 1,
+          role: 1,
           avatar: 1,
           username: 1,
           recipenum: {
@@ -425,6 +426,7 @@ export const getuserHome = async (req, res) => {
         $limit: 18
       }
     ])
+    result.filter(u => u.role !== 1)
     res.status(200).send({ success: true, message: '', result })
   } catch (error) {
     console.log(error)

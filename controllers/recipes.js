@@ -247,6 +247,7 @@ export const editRecipe = async (req, res) => {
     return
   }
   try {
+    let img = []
     const data = {
       name: req.body.name,
       type: req.body.type,
@@ -258,9 +259,51 @@ export const editRecipe = async (req, res) => {
       ingredients: JSON.parse(req.body.ingredients),
       classify: JSON.parse(req.body.classify)
     }
-    if (req.filepath) data.image = req.filepath
+    if (req.body.orgimage) {
+      if (typeof (req.body.orgimage) === 'string') {
+        const a = req.body.orgimage.replace('http://localhost:3000/files/', '')
+        img.push(a)
+      } else {
+        img = req.body.orgimage.map(i => {
+          i = i.replace('http://localhost:3000/files/', '')
+          return i
+        })
+      }
+    }
+    if (req.filepath) {
+      for (const i of req.filepath) {
+        img.push(i)
+      }
+    }
+    data.image = img
     const result = await recipes.findByIdAndUpdate(req.params.id, data, { new: true })
     res.status(200).send({ success: true, meesage: '食譜修改成功', result })
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      const key = Object.keys(error.errors)[0]
+      const message = error.errors[key].message
+      res.status(400).send({ success: false, message: message })
+    } else {
+      res.status(500).send({ success: false, message: '伺服器錯誤' })
+    }
+  }
+}
+
+export const delImage = async (req, res) => {
+  const author = await recipes.findById(req.params.id, 'author')
+  if (req.user.role === 0 && (req.user._id.toString() !== author.author._id.toString())) {
+    res.status(403).send({ success: false, message: '沒有權限修改文章' })
+    return
+  }
+  if (!req.headers['content-type'] || !req.headers['content-type'].includes('application/json')) {
+    res.status(400).send({ success: false, message: '資料格式不正確' })
+    return
+  }
+  try {
+    const recipe = await recipes.findById(req.params.id)
+    recipe.image.splice(req.body.index, 1)
+    await recipe.save({ validateBeforeSave: false })
+    res.status(200).send({ success: true, meesage: '食譜修改成功' })
   } catch (error) {
     if (error.name === 'ValidationError') {
       const key = Object.keys(error.errors)[0]

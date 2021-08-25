@@ -74,6 +74,7 @@ export const editproduct = async (req, res) => {
 export const getproduct = async (req, res) => {
   try {
     const result = await products.find()
+    result.filter(p => p.sell === true)
     res.status(200).send({ success: true, message: '', result })
   } catch (error) {
     console.log(error)

@@ -71,6 +71,7 @@ export const editposts = async (req, res) => {
 export const getposts = async (req, res) => {
   try {
     const result = await posts.find()
+    result.filter(p => p.isEnabled === 1)
     res.status(200).send({ success: true, message: '', result })
   } catch (error) {
     console.log(error)
@@ -93,6 +94,9 @@ export const getpostsHome = async (req, res) => {
 export const getpostsById = async (req, res) => {
   try {
     const result = await posts.findById(req.params.id)
+    if (result.isEnabled !== 1) {
+      result = {}
+    }
     res.status(200).send({ success: true, meesage: '', result })
   } catch (error) {
     if (error.name === 'CastError') {
