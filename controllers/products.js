@@ -81,6 +81,18 @@ export const getproduct = async (req, res) => {
   }
 }
 
+export const getproductHome = async (req, res) => {
+  try {
+    const result = await products.aggregate([{
+      $limit: 10
+    }])
+    res.status(200).send({ success: true, message: '', result })
+  } catch (error) {
+    console.log(error)
+    res.status(500).send({ success: false, message: '伺服器錯誤' })
+  }
+}
+
 export const getproductById = async (req, res) => {
   try {
     const result = await products.findById(req.params.id)

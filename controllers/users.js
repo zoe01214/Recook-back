@@ -86,6 +86,7 @@ export const editInfo = async (req, res) => {
       username: req.body.newname,
       profile: req.body.newprofile
     }
+    if (req.body.image === '' && req.body.delavatar) data.avatar = []
     if (req.filepath && req.body.image !== '') data.avatar = req.filepath
     const result = await users.findByIdAndUpdate(req.body._id, data, { new: true })
     res.status(200).send({ success: true, message: '成功修改', result })
@@ -383,6 +384,47 @@ export const extend = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const result = await users.findById(req.params.id, 'account username avatar follower following recipes profile likes favorites').populate('favorites.recipes', 'name image isEnabled publish_date likes').populate('recipes.recipe', 'name image isEnabled publish_date likes').populate('follower.users', 'account username avatar').populate('following.users', 'account username avatar')
+    res.status(200).send({ success: true, message: '', result })
+  } catch (error) {
+    console.log(error)
+    if (error.name === 'CastError') {
+      res.status(400).send({ success: false, message: '查無使用者' })
+    }
+    res.status(500).send({ success: false, message: '伺服器錯誤' })
+  }
+}
+export const getuserHome = async (req, res) => {
+  try {
+    const result = await users.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'follower.users',
+          foreignField: '_id',
+          as: 'follower'
+        }
+      }, {
+        $project: {
+          _id: 1,
+          isEnabled: 1,
+          account: 1,
+          avatar: 1,
+          username: 1,
+          recipenum: {
+            $size: '$recipes'
+          },
+          followernum: {
+            $size: '$follower'
+          }
+        }
+      }, {
+        $sort: {
+          followernum: -1
+        }
+      }, {
+        $limit: 18
+      }
+    ])
     res.status(200).send({ success: true, message: '', result })
   } catch (error) {
     console.log(error)

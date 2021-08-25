@@ -14,6 +14,7 @@ import { register,
    editUser,
    addCart,
    getCart,
+   getuserHome,
    editCart,
    extend } from '../controllers/users.js'
 
@@ -35,6 +36,8 @@ router.patch('/:id', auth, editUser)
 router.get('/my', auth, getuserinfo)
 // 管理員取得所有資料
 router.get('/all', auth, getuserAll)
+// 取得人氣廚師
+router.get('/home', getuserHome)
 // 一般使用者取得他人資料
 router.get('/:id', getUserById)
 

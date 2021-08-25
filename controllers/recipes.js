@@ -162,6 +162,80 @@ export const getRecipe = async (req, res) => {
   }
 }
 
+export const getRecipeHome = async (req, res) => {
+  try {
+    const result = await recipes.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: '_id',
+          as: 'author'
+        }
+      }, {
+        $lookup: {
+          from: 'recipes',
+          localField: 'author.recipes.recipe',
+          foreignField: '_id',
+          as: 'authorrecipes'
+        }
+      }, {
+        $unwind: {
+          path: '$author'
+        }
+      }, {
+        $project: {
+          image: 1,
+          name: 1,
+          likes: 1,
+          type: 1,
+          video: 1,
+          ingredients: 1,
+          servings: 1,
+          time: 1,
+          description: 1,
+          instructions: 1,
+          classify: 1,
+          isEnabled: 1,
+          publish_date: 1,
+          likenum: {
+            $size: '$likes'
+          },
+          'author._id': '$author._id',
+          'author.username': '$author.username',
+          'author.avatar': '$author.avatar',
+          'author.account': '$author.account',
+          'author.follower': {
+            $size: '$author.follower'
+          },
+          'author.recipes': {
+            $size: {
+              $filter: {
+                input: '$authorrecipes',
+                cond: {
+                  $eq: [
+                    '$$this.isEnabled', 1
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }, {
+        $sort: {
+          likenum: -1
+        }
+      }, {
+        $limit: 12
+      }
+    ])
+
+    res.status(200).send({ success: true, meesage: '', result })
+  } catch (error) {
+    res.status(500).send({ success: false, message: '伺服器錯誤' })
+  }
+}
+
 export const editRecipe = async (req, res) => {
   const author = await recipes.findById(req.params.id, 'author')
   if (req.user.role === 0 && (req.user._id.toString() !== author.author._id.toString())) {
